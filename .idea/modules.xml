@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/4A.iml" filepath="$PROJECT_DIR$/4A.iml" />
       <module fileurl="file://$USER_HOME$/SkyDrive/IdeaProjects/4A/4A.iml" filepath="$USER_HOME$/SkyDrive/IdeaProjects/4A/4A.iml" />
     </modules>
   </component>

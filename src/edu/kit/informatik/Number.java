@@ -1,7 +1,5 @@
 package edu.kit.informatik;
 
-import java.util.InputMismatchException;
-
 /**
  * @version 1.0
  * @author Sebastian Schindler
@@ -12,13 +10,13 @@ public class Number extends ListElement {
     /**
      * Constructor for a new number
      * @param number number value
-     * @throws InputMismatchException If number smaller than zero
+     * @throws IllegalArgumentException If number smaller than zero
      */
-    public Number(int number) throws InputMismatchException {
+    public Number(int number) throws IllegalArgumentException {
         super();
         if (number > 0) {
             this.number = number;
-        } else throw new InputMismatchException("<=0");
+        } else throw new IllegalArgumentException();
     }
 
     /**
@@ -31,9 +29,15 @@ public class Number extends ListElement {
 
     @Override
     public boolean equals(Object number) {
+        if (!(number instanceof Number)) return false;
         Number tmp = (Number) number;
         return tmp.getNumber() == this.number;
     }
 
 
+    @Override
+    public String toString() {
+        return (new Integer(this.getNumber())).toString();
+    }
 }
+//l

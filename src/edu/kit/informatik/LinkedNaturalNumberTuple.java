@@ -1,7 +1,5 @@
 package edu.kit.informatik;
 
-import java.util.InputMismatchException;
-
 /**
  * The {@code LinkedNaturalNumberTuple} class encapsulates one or more natural numbers (excluding 0) organized as a
  * tuple. This means:
@@ -26,18 +24,27 @@ public class LinkedNaturalNumberTuple {
      *            the numbers to initialize this tuple
      */
     public LinkedNaturalNumberTuple(int[] numbers) {
-        this.tuple = new DualLinkedList(new Number(numbers[0]));
+        this.tuple = new DualLinkedList();
+        if (numbers.length != 0) {
 
-        for (int i = 1; i < numbers.length; i++) {
-            Number tmp;
-            try {
-                tmp = new Number(numbers[i]);
-            } catch (InputMismatchException e) {
-                continue;
+            for (int i: numbers) {
+                Number tmp;
+                try {
+                    tmp = new Number(i);
+                } catch (IllegalArgumentException e) {
+                    continue;
+                }
+                if (tuple.getTail() != null && tuple.getStart() != null) {
+                    tuple.getTail().setNext(tmp);
+                    tmp.setPrevious(tuple.getTail());
+                    tuple.setTail(tmp);
+                    continue;
+                }
+                tuple.setTail(tmp);
+                tuple.setStart(tmp);
+                tmp.setNext(null);
+                tmp.setPrevious(null);
             }
-            tuple.getTail().setNext(tmp);
-            tmp.setPrevious(tuple.getTail());
-            tuple.setTail(tmp);
         }
     }
 
@@ -82,13 +89,23 @@ public class LinkedNaturalNumberTuple {
      *            the number to be inserted
      */
     public void insert(int number) {
-        if (number < 1) return;
-
-        Number element = new Number(number);
-        element.setPrevious(tuple.getTail());
-        tuple.getTail().setNext(element);
-        element.setNext(null);
+        Number element;
+        try {
+            element = new Number(number);
+        } catch (IllegalArgumentException e) {
+            return;
+        }
+        if (tuple.getTail() != null && tuple.getStart() != null) {
+            element.setPrevious(tuple.getTail());
+            tuple.getTail().setNext(element);
+            element.setNext(null);
+            tuple.setTail(element);
+            return;
+        }
         tuple.setTail(element);
+        tuple.setStart(element);
+        element.setPrevious(null);
+        element.setNext(null);
     }
 
     /**
@@ -101,32 +118,13 @@ public class LinkedNaturalNumberTuple {
      */
     public boolean remove(int number) {
         boolean out = false;
+        int index = this.indexOf(number);
 
-        Number current = (Number) tuple.getStart();
-        do {
-            if (current.getNumber() == number) {
-                out = true;
-                if (current.getNext() != null && current.getPrevious() != null) {
-                    current.getPrevious().setNext(current.getNext());
-                    current.getNext().setPrevious(current.getPrevious());
-                    continue;
-                }
-                if (current.getNext() != null) {
-                    tuple.setStart(current.getNext());
-                    tuple.getStart().setPrevious(null);
-                    continue;
-                }
-                if (current.getPrevious() != null) {
-                    tuple.setTail(current.getPrevious());
-                    tuple.getTail().setNext(null);
-                    continue;
-                }
-                tuple.setStart(null);
-                tuple.setTail(null);
-            }
-            current = (Number) current.getNext();
-        } while (current != null);
-
+        while (index != -1) {
+            out = true;
+            this.removePos(index);
+            index = this.indexOf(number);
+        }
         return out;
     }
 
@@ -181,28 +179,200 @@ public class LinkedNaturalNumberTuple {
      *         invalid.
      */
     public boolean swap(int firstPosition, int lastPosition) {
-        ListElement first = tuple.getIndex(firstPosition);
-        ListElement last = tuple.getIndex(lastPosition);
-        if (first != null && last != null) {
-            first.getPrevious().setNext(last);
-            first.getNext().setPrevious(last);
-            last.getNext().setPrevious(first);
-            last.getPrevious().setNext(first);
+        ListElement last;
+        ListElement first;
+        if (firstPosition < lastPosition) {
+            last = this.removePos(lastPosition);
+            first = this.removePos(firstPosition);
+
+            if (last == null || first == null) return false;
+
+            this.insertPos((Number) last, firstPosition);
+            this.insertPos((Number) first, lastPosition);
+            return true;
+        } else {
+            first = this.removePos(firstPosition);
+            last = this.removePos(lastPosition);
+
+            if (last == null || first == null) return false;
+
+            this.insertPos((Number) first, lastPosition);
+            this.insertPos((Number) last, firstPosition);
             return true;
         }
-        return false;
+
     }
 
     @Override
     public boolean equals(Object object) {
-        // TODO implement method, and then REMOVE following method call
-        return super.equals(object);
+        if (!(object instanceof LinkedNaturalNumberTuple)) return false;
+
+        return this.tuple.equals(((LinkedNaturalNumberTuple) object).tuple);
     }
 
     @Override
     public String toString() {
-        // TODO implement method, and then REMOVE following method call
-        return super.toString();
+        String out = "";
+        Number current = (Number) this.tuple.getStart();
+        if (current != null) {
+            out += current.toString();
+            current = (Number) current.getNext();
+        } else {
+            return "-1";
+        }
+        while (current != null) {
+            out += "," + current.toString();
+            current = (Number) current.getNext();
+        }
+
+        return out;
     }
 
+    /**
+     * Prints the current tuple
+     */
+    public void print() {
+        Terminal.printLine(this.toString());
+    }
+
+    /**
+     * Removes the Element at a specific position from the tuple
+     * @param pos position
+     * @return Element at that position, null if unsuccessful
+     */
+    public ListElement removePos(int pos) {
+        if (pos == 0) {
+            ListElement start = tuple.getStart();
+            if (start != null) {
+                tuple.setStart(start.getNext());
+                tuple.getStart().setPrevious(null);
+                return start;
+            }
+            return null;
+        }
+        ListElement prev = tuple.getStart();
+        if (prev == null) return null;
+        for (int i = 1; i < pos; i++) {
+            prev = prev.getNext();
+            if (prev == null) return null;
+        }
+        if (prev.getNext() == null) return null;
+        ListElement next = prev.getNext().getNext();
+        ListElement out = prev.getNext();
+        if (next != null) {
+            prev.setNext(next);
+            next.setPrevious(prev);
+            return out;
+        }
+        tuple.setTail(prev);
+        prev.setNext(null);
+        return out;
+    }
+
+    /**
+     * Inserts an Element at a specific Position
+     * @param number Element to insert
+     * @param pos Position
+     * @return true if successful
+     */
+    public boolean insertPos(Number number, int pos) {
+        if (pos == 0) {
+            ListElement next = tuple.getStart();
+            tuple.setStart(number);
+            number.setPrevious(null);
+            if (next != null) {
+                next.setPrevious(number);
+                number.setNext(next);
+            } else {
+                tuple.setTail(number);
+                number.setNext(null);
+            }
+            return true;
+        }
+
+        ListElement prev = tuple.getStart();
+        if (prev == null) return false;
+        for (int i = 1; i < pos; i++) {
+            prev = prev.getNext();
+            if (prev == null) return false;
+        }
+        ListElement next = prev.getNext();
+
+        prev.setNext(number);
+        number.setPrevious(prev);
+        if (next != null) {
+            next.setPrevious(number);
+            number.setNext(next);
+            return true;
+        }
+        tuple.setTail(number);
+        number.setNext(null);
+        return true;
+    }
+
+    /**
+     * Waits for input, then calls appropriate methods
+     */
+    public void getInput() {
+        String command = Terminal.readLine();
+
+        String[] commands = command.split(" ");
+
+        if (commands[0].equals("quit")) return;
+
+        if (commands[0].equals("info")) {
+            Terminal.printLine(this.toString());
+        }
+
+        if (commands[0].equals("min")) {
+            String out = (new Integer(this.min())).toString();
+            if (out.equals("-1")) {
+                Terminal.printLine("The tuple is empty.\nEnd of line.");
+            }
+            Terminal.printLine(out);
+        }
+
+        if (commands[0].equals("max")) {
+            String out = (new Integer(this.max())).toString();
+            if (out.equals("-1")) {
+                Terminal.printLine("The tuple is empty.\nEnd of line.");
+            }
+            Terminal.printLine(out);
+        }
+
+        if (commands[0].equals("swap")) {
+            int first = Integer.parseInt(commands[1]);
+            int second = Integer.parseInt(commands[2]);
+
+            if (!this.swap(first, second)) {
+                Terminal.printLine("Swapping unsuccessful.\nEnd of Line.");
+            }
+        }
+
+        if (commands[0].equals("remove")) {
+            int number = Integer.parseInt(commands[1]);
+            if (remove(number)) {
+                Terminal.printLine("true");
+            } else Terminal.printLine("false");
+        }
+
+        if (commands[0].equals("insert")) {
+            int number = Integer.parseInt(commands[1]);
+            this.insert(number);
+        }
+        this.getInput();
+    }
+
+    /**
+     * Main method
+     *
+     * Initializes new LinkedNaturanNumberTuple and waits for Input
+     * @param args Arguments (none)
+     */
+    public static void main(String args[]) {
+        int[] a = new int[0];
+        LinkedNaturalNumberTuple mainTuple = new LinkedNaturalNumberTuple(a);
+        mainTuple.getInput();
+    }
 }
+//l

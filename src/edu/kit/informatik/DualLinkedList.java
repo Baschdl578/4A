@@ -20,6 +20,14 @@ public class DualLinkedList {
     }
 
     /**
+     * Constructs a new empty list
+     */
+    public DualLinkedList() {
+        this.start = null;
+        this.tail = null;
+    }
+
+    /**
      * Gets the start of the List
      * @return this.start
      */
@@ -69,15 +77,22 @@ public class DualLinkedList {
 
     @Override
     public boolean equals(Object list) {
+        if (!(list instanceof DualLinkedList)) return false;
         DualLinkedList tmp = (DualLinkedList) list;
 
-        if (!tmp.getStart().equals(this.getStart())) {
-            return false;
-        }
-        if (!tmp.getTail().equals(this.getTail())) {
-            return false;
-        }
+        Number current1 = (Number) this.getStart();
+        Number current2 = (Number) tmp.getStart();
 
-        ListElement current = 
+        do {
+            if (!current1.equals(current2)) return false;
+            current1 = (Number) current1.getNext();
+            current2 = (Number) current2.getNext();
+        } while (current1 != null && current2 != null);
+
+        if (current1 != null || current2 != null) return false;
+
+        return ((Number) tmp.getTail()).equals((Number) this.getTail());
     }
 }
+
+//l
